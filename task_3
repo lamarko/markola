@@ -1,0 +1,47 @@
+TIME: approx couple hours (I have spent a lot of time trying to provide solution with "USER DEFINING SCALAR FUNCTION")
+
+***************************************************************************************************************************
+# Please, note that this approach is supported on Microsoft SQL server but not on MySQL.
+# Best approach would be "MULTI STATEMENT TABLE VALUETED FUNCTIONS" which show table format based on reuested data from existing "CSV" table:
+
+CREATE FUNCTION fn_prikaz_nove_tabele_na_osnovu_podataka_postojece_tabele()
+RETURNS @ime_prikaza_tabele TABLE ([Expense Type] varchar(20),[MEDICINES MANAGEMENT - CLINICAL] float,'SAFEGUARDING' float,[CHC ADULT FULLY FUNDED] float,...)
+AS
+BEGIN
+	INSERT INTO @ime_prikaza_tabele
+	SELECT [Expense Type], sum([AP Amount]) where [Expense area]=[MEDICINES MANAGEMENT - CLINICAL] and [Expense Type]=[Expense Type], sum([AP Amount]) where [Expense area]='SAFEGUARDING' and [Expense Type]=[Expense Type], sum([AP Amount]) where [Expense area]=[CHC ADULT FULLY FUNDED] and [Expense Type]=[Expense Type], ... FROM ime_postojece_csv_tabele
+	RETURN
+END
+
+
+***************************************************************************************************************************
+# I have aslo tried to provide solution for this task with "USER DEFINING SCALAR FUNCTIONS", but I have experienced some dificulties with loop through values of "@[Expense Type]".
+
+# creating function which will calculate SUM of "AP Amount" for specific "Expense Type" and "Expense area"
+
+CREATE FUNCTION <schema_name>.Sum_of_ApAmount_for_ExpenseType_and_ExpenseArea(@[Expense Type] varchar, @[Expense area] varchar] float )		
+RETURNS float		
+AS
+BEGIN
+	SELECT sum(@[AP Amount])
+	FROM <CSV_table_name>
+	WHERE [Expense Type] = @[Expense Type]
+	AND [Expense area] = @[Expense area]
+	RETURN float
+END
+
+
+# Since function is now defined,the idea was to run query for creating table with defining each column with this function and specific parameters. But I have problem with assigning values to "@[Expense Type]". I have tried to loop through "@[Expense Type]" with "CURSOR" but I did not find adequate solution.
+
+CREATE TABLE <new_table_name>(
+[Expense Type] varchar(25),
+[MEDICINES MANAGEMENT - CLINICAL] AS (<schema_name>.Sum_of_ApAmount_for_ExpenseType_and_ExpenseArea(@[Expense Type],[MEDICINES MANAGEMENT - CLINICAL])),
+SAFEGUARDING AS (<schema_name>.Sum_of_ApAmount_for_ExpenseType_and_ExpenseArea(@[Expense Type],SAFEGUARDING)),
+[CHC ADULT FULLY FUNDED] AS (<schema_name>.Sum_of_ApAmount_for_ExpenseType_and_ExpenseArea(@[Expense Type],[CHC ADULT FULLY FUNDED])),
+...
+)
+
+***************************************************************************************************************************
+
+
+

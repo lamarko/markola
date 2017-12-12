@@ -1,0 +1,108 @@
+#!/usr/bin/python3
+
+"""
+TIME: approx 35 min
+EXPLANATION:
+There are 2 main problems, 1-unconsistency of blog check data ("it is possible that column order and count can change without prior notice") and 2-missing date dimension ("you will never have a date dimension in the CSV report") .
+	First issue is solved by collecting available data from csv by parsing it with Python "csv" module (I have put comments for important lines so you could follow script workflow).
+	Second issue with missing date dimension is solved by creating table with TIMESTAMP datatype (MySQL is used as template). For each insertion of csv data in table, there will be adequate timestamp generated for that action.
+	For faster search I have created index on "date_of_blog_check" in table "Blog_traffic" .
+Since blog check data is now located in MySQL table with adequate timestamp for each row, you can run simple query to get data for specific date .
+	I do not have enough information how do you collect csv files, I can only presume that you are using some script. Based on that assumption -whole process can be automated by defining this scripts as cron jobs (please, note that replacing old csv file with new one need to be defined in script as well)
+"""
+
+# Data will be saved on MySQL
+import pymysql					
+
+# For csv file manipulation I will use csv module
+import csv
+
+if __name__=="__main__":
+	# opening csv file for reading by "csv.reader"
+	with open("path_and_name_of_csv_file", "r") as Blog_traffic_csv:
+		obj_reading = csv.reader(Blog_traffic_csv)
+	
+		obj_columns_names = []		# declaration of list 
+		obj_columns_values = []		# declaration of list 
+	
+		obj_columns_names.extend(list(next(obj_reading)))		# creating LIST with available columns NAMES as elements
+		obj_columns_values.extend(list(next(obj_reading)))		# creating LIST with available columns VALUES as elements
+		# please, note that I am assuming that csv is "clean" file. 
+		# If it is collected from different OS there could be additional "\n" character at the end of each line. 
+		# It can be solved with ".strip()"
+
+
+		# predefining / initialisation of variables values
+		obj_blogId = 0
+		obj_views = 0
+		obj_clicks = 0
+	
+		# initialisation of iterator variable
+		i = 0
+	
+		# looping through available data provided in csv file and assigning adeuate values to obj_blogId,obj_views and obj_clicks
+		for i in range(3):
+			if obj_columns_names[i] == "blogId":
+				obj_blogId = int(obj_columns_values[i])
+			elif obj_columns_names[i] == "views":
+				obj_views = int(obj_columns_values[i])
+			elif obj_columns_names[i] == "clicks":
+				obj_clicks = int(obj_columns_values[i])
+
+	# Defining query for table creation 
+	concrete_sql_query_1 = "create table Blog_traffic(id int not null auto_increment primary key,blogid int,views int,click int,date_of_blog_check timestamp )"
+
+	# Defining query for putting index on "date_of_blog_check timestamp" for faster search
+	concrete_sql_query_2 = "create index index_timestamp_value on Blog_traffic(date_of_blog_check)"
+
+	# Defining query for importing values from csv file
+	concrete_sql_query_3 = "insert into Blog_traffic(blogid,views,click,date_of_blog_check) values("{}","{}","{}",now())".format(obj_blogId, obj_views, obj_clicks )
+
+
+	# Creating access infrastructure to concrete MySQL server
+	obj_connection = pymysql.connect('MySQL_server_IP_address','port_number,'username','password','database_name')
+	try:
+		obj_cursor = obj_connection.cursor()
+		obj_cursor.execute(concrete_sql_query_1)
+		obj_cursor.execute(concrete_sql_query_2)
+		obj_cursor.execute(concrete_sql_query_3)
+		obj_connection.commit()
+	
+	except: Exception as message_Err:
+		print(message_Err)
+		obj_connection.rollback()
+	finally:
+		obj_connection.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

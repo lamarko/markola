@@ -1,0 +1,16 @@
+
+# TIME: approx 15 min
+
+# Task: 2a. Total spending (amount) by Department family.
+
+mysql -h <IP_address_of_MySQL_server> -P <port_number> -u <username> -p	-D <database> -e 
+"select sum([AP Amount]) from <ime_tabele> where [Department family]=[Department of Health]"	
+# accessing to concrete database of MySQL and executing query for "Total spending (amount) by Department family"
+
+
+
+# Task: 2b. Total spending (amount) by Department family + Expense type.
+
+mysql -h <IP_address_of_MySQL_server> -P <port_number> -u <username> -p	-D <database> -e "select sum([AP Amount]) from <ime_tabele> where [Department family]=[Department of Health] and [Expense Type]=<konkretan_Expense Type>"
+
+
